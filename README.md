@@ -11,7 +11,11 @@
 
 ## 配置
 
-把 `preferences.example.plist` 复制到设备隐根内 `jbroot /var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist` 所指向的实际路径，填写真实 Bundle ID。不要放在真实 rootfs 的同名路径。`enabled` 缺省为 `false`；缺少配置时插件不启用限制。`powerMode` 可设 `lowPower` 或 `fullPower`。修改配置后发送 Darwin 通知 `com.huayuarc.cputhermal.lowpower/settingsChanged`，或重启 `thermalmonitord`。
+安装后在 iOS「设置」→「CPU 低功耗」里操作总开关、常驻模式、三档强度与两种应用名单。首次安装默认关闭，须主动开启。设置页写入 RootHide 隐根内的偏好文件，并通知 `thermalmonitord` 重载。
+
+仍可手动把 `preferences.example.plist` 复制到设备隐根内 `jbroot /var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist` 所指向的实际路径；不要放在真实 rootfs 的同名路径。修改后发送 Darwin 通知 `com.huayuarc.cputhermal.lowpower/settingsChanged`，或重启 `thermalmonitord`。
+
+设置图标提供 `icon.png` (29×29)、`icon@2x.png` (58×58)、`icon@3x.png` (87×87)；底稿独立保存，不会打进 DEB。设置界面和应用选择页已通过构建与静态检查，**尚无真机打开页面的验证**。
 
 ## 构建与限制
 

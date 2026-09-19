@@ -38,6 +38,11 @@ jobs:
           test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
           dpkg-deb -c "$deb" | grep -q 'CTLowPower.dylib'
           dpkg-deb -c "$deb" | grep -q 'CTLowPowerForeground.dylib'
+          dpkg-deb -c "$deb" | grep -q 'CTLowPowerSettings.bundle/Info.plist'
+          dpkg-deb -c "$deb" | grep -q 'PreferenceLoader/Preferences/CTLowPowerSettings.plist'
+          for icon in icon.png icon@2x.png icon@3x.png; do
+            dpkg-deb -c "$deb" | grep -q "CTLowPowerSettings.bundle/$icon"
+          done
 
       - name: Upload DEB
         uses: actions/upload-artifact@v4

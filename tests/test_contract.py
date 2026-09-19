@@ -1,5 +1,6 @@
 from pathlib import Path
 import plistlib
+import struct
 
 root = Path(__file__).resolve().parents[1]
 sample = plistlib.loads((root / "preferences.example.plist").read_bytes())
@@ -26,6 +27,23 @@ assert "roothide/theos.git" in workflow
 assert "THEOS_PACKAGE_SCHEME=roothide" in workflow
 assert "Architecture: iphoneos-arm64e" in control
 assert "THEOS_PACKAGE_SCHEME=rootless" not in workflow
+assert "preferenceloader" in control
+
+settings = root / "Settings"
+info = plistlib.loads((settings / "Info.plist").read_bytes())
+entry = plistlib.loads((root / "layout/Library/PreferenceLoader/Preferences/CTLowPowerSettings.plist").read_bytes())["entry"]
+items = plistlib.loads((settings / "Root.plist").read_bytes())["items"]
+assert info["NSPrincipalClass"] == entry["detail"] == "CTLowPowerRootListController"
+assert entry["bundle"] == info["CFBundleExecutable"] == "CTLowPowerSettings"
+assert entry["icon"] == "icon.png"
+assert {item.get("key") for item in items if "key" in item} == {"enabled", "powerMode", "lowPowerStrength"}
+assert {item.get("detail") for item in items if "detail" in item} == {"CTFullPowerAppListController", "CTLowPowerAppListController"}
+for filename, size in (("icon.png", 29), ("icon@2x.png", 58), ("icon@3x.png", 87)):
+    data = (settings / filename).read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert struct.unpack(">II", data[16:24]) == (size, size)
+for filename in ("CTLowPowerRootListController.m", "CTLowPowerAppListController.m"):
+    assert '@"' not in (settings / filename).read_text(encoding="utf-8")
 
 h = 1469598103934665603
 for byte in b"com.example.game":

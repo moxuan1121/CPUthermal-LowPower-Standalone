@@ -16,3 +16,15 @@ CTLowPowerForeground_CFLAGS = -fobjc-arc
 CTLowPowerForeground_FRAMEWORKS = Foundation UIKit
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+
+BUNDLE_NAME = CTLowPowerSettings
+CTLowPowerSettings_FILES = Settings/CTLowPowerRootListController.m Settings/CTLowPowerAppListController.m
+CTLowPowerSettings_INSTALL_PATH = /Library/PreferenceBundles
+CTLowPowerSettings_CFLAGS = -fobjc-arc -ISettings
+CTLowPowerSettings_FRAMEWORKS = Foundation UIKit
+CTLowPowerSettings_PRIVATE_FRAMEWORKS = Preferences
+CTLowPowerSettings_LDFLAGS = -L$(THEOS_VENDOR_LIBRARY_PATH)/iphone/roothide -lroothide
+include $(THEOS_MAKE_PATH)/bundle.mk
+
+after-stage::
+	$(ECHO_NOTHING)cp Settings/Info.plist Settings/Root.plist Settings/icon.png Settings/icon@2x.png Settings/icon@3x.png "$(THEOS_STAGING_DIR)/Library/PreferenceBundles/CTLowPowerSettings.bundle/"$(ECHO_END)
