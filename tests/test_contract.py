@@ -14,6 +14,10 @@ for name in ("CTLowPower.plist", "CTLowPowerForeground.plist"):
 code = (root / "LowPower.xm").read_text(encoding="utf-8")
 assert "MIN(target, CTCapMW())" in code
 assert "MAX(level, 2)" in code
+assert "%hook CommonProduct" in code
+assert "%hook ApplePPMCPU" in code
+assert "CTApplyKnownLevel(ppm)" in code
+assert "level >= 0 && level < 2" in code
 assert "MIN(ceiling, CTCapPercent())" in code
 assert "CTRefreshMode" in code
 assert "return !selected || CTContainsHash(whitelist, CTForegroundHash());" in code

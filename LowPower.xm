@@ -16,6 +16,8 @@ static int capMW = 2500;
 static int capPercent = 45;
 static NSArray<NSString *> *lowPowerApps;
 static NSHashTable *controllers;
+static NSHashTable *ppmInstances;
+static NSHashTable *products;
 static BOOL clearPending;
 
 static BOOL CTActive(void) {
@@ -59,12 +61,25 @@ static void CTCallUpdateCPU(id controller) {
         ((void (*)(id, SEL))objc_msgSend)(controller, @selector(updateCPU));
 }
 
+static void CTApplyKnownLevel(id object) {
+    // Only raise a readable native level; never replace a stricter thermal level with 2.
+    if (!CTActive() || ![object respondsToSelector:@selector(CPULevel)] ||
+        ![object respondsToSelector:@selector(setCPULevel:)]) return;
+    int level = ((int (*)(id, SEL))objc_msgSend)(object, @selector(CPULevel));
+    if (level >= 0 && level < 2)
+        ((void (*)(id, SEL, int))objc_msgSend)(object, @selector(setCPULevel:), 2);
+}
+
 static void CTReapply(void) {
-    NSArray *snapshot;
+    NSArray *snapshot, *ppmSnapshot, *productSnapshot;
     os_unfair_lock_lock(&stateLock);
     snapshot = controllers.allObjects;
+    ppmSnapshot = ppmInstances.allObjects;
+    productSnapshot = products.allObjects;
     os_unfair_lock_unlock(&stateLock);
     for (id controller in snapshot) CTCallUpdateCPU(controller);
+    for (id ppm in ppmSnapshot) { CTCallUpdateCPU(ppm); CTApplyKnownLevel(ppm); }
+    for (id product in productSnapshot) CTApplyKnownLevel(product);
 }
 
 static void CTApplyDesiredMode(void) {
@@ -121,6 +136,64 @@ static void CTTrack(id controller) {
     if (shouldLog) NSLog(@"[CTLowPower] MitigationController hook active");
 }
 
+static void CTTrackPPM(id ppm) {
+    static BOOL logged;
+    os_unfair_lock_lock(&stateLock);
+    if (!ppmInstances) ppmInstances = [NSHashTable weakObjectsHashTable];
+    [ppmInstances addObject:ppm];
+    BOOL shouldLog = !logged;
+    logged = YES;
+    os_unfair_lock_unlock(&stateLock);
+    if (shouldLog) NSLog(@"[CTLowPower] ApplePPMCPU hook active; level getter=%d", [ppm respondsToSelector:@selector(CPULevel)]);
+}
+
+static void CTTrackProduct(id product) {
+    static BOOL logged;
+    os_unfair_lock_lock(&stateLock);
+    if (!products) products = [NSHashTable weakObjectsHashTable];
+    [products addObject:product];
+    BOOL shouldLog = !logged;
+    logged = YES;
+    os_unfair_lock_unlock(&stateLock);
+    if (shouldLog) NSLog(@"[CTLowPower] CommonProduct hook active; level getter=%d", [product respondsToSelector:@selector(CPULevel)]);
+}
+
+%hook CommonProduct
+- (id)initProduct:(id)params {
+    id result = %orig;
+    if (result) { CTTrackProduct(result); CTApplyKnownLevel(result); }
+    return result;
+}
+
+- (void)setCPMSMitigationsEnabled:(BOOL)value {
+    %orig(CTActive() ? YES : value);
+}
+
+- (void)setCPULevel:(int)level {
+    CTTrackProduct(self);
+    %orig(CTActive() ? MAX(level, 2) : level);
+}
+%end
+
+%hook ApplePPMCPU
+- (id)init {
+    id result = %orig;
+    if (result) { CTTrackPPM(result); CTApplyKnownLevel(result); }
+    return result;
+}
+
+- (void)updateCPU {
+    CTTrackPPM(self);
+    %orig;
+    CTApplyKnownLevel(self);
+}
+
+- (void)setCPULevel:(int)level {
+    CTTrackPPM(self);
+    %orig(CTActive() ? MAX(level, 2) : level);
+}
+%end
+
 // These hooks only tighten CPU budgets. Native thermal limits remain in force.
 %hook MitigationController
 - (id)initForFastLoop:(BOOL)fastLoop noDisplay:(BOOL)noDisplay powerSaveParams:(id)saveParams powerZoneParams:(id)zoneParams {
@@ -142,7 +215,12 @@ static void CTTrack(id controller) {
 }
 
 - (void)setCPULevel:(int)level {
+    CTTrack(self);
     %orig(CTActive() ? MAX(level, 2) : level);
+}
+
+- (void)setCPMSMitigationsEnabled:(BOOL)value {
+    %orig(CTActive() ? YES : value);
 }
 
 - (void)setMaxCPUPowerTarget:(int)target useLegacyPath:(BOOL)legacy setProperty:(uintptr_t)property {

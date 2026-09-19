@@ -1,12 +1,13 @@
 # CPUthermal 独立低功耗插件（实验源码）
 
-从 CPUthermal 1.6.2-129 的分析结果提取低功耗相关功能，**不是原 DEB 的逐字源码，也未经过真机验证**。本工程有独立包名、配置域和通知名；与原 CPUthermal 包冲突，不要同时注入 `thermalmonitord`。
+从 CPUthermal 1.6.2-129 的分析结果提取低功耗相关功能，**不是原 DEB 的逐字源码，也未经过真机验证**。所附 1.6.2-64 源码里低功耗判断被写死为关闭，但保留了 CPU 等级 2 和预算设置路径，可作为实现线索。本工程有独立包名、配置域和通知名；与原 CPUthermal 包冲突，不要同时注入 `thermalmonitord`。
 
 ## 功能边界
 
 - 启用插件后，白名单模式关闭时全局低功耗；打开时只对 `lowPowerApps` 中的前台应用施加低功耗限制。白名单外保持系统原生温控，**不会解除系统温控**。熄屏不再强制覆盖白名单模式。
 - 从旧版升级时，如未设置新的白名单开关，旧 `powerMode=fullPower` 自动视为白名单开启，旧 `powerMode=lowPower` 视为白名单关闭。旧 `fullPowerApps` 不再使用。
 - 三档上限沿用逆向分析值：`saver` 2000mW/35%，`standard` 2500mW/45%，`performance` 3000mW/55%。与系统原生预算取更严格者，不覆盖更严格的原生热限制。
+- CPU 降频路径按原源码同时覆盖 `CommonProduct`、`ApplePPMCPU` 和 `MitigationController` 的 CPU 等级；低功耗等级为 2。原源码没有写死一个通用 MHz 值，实际频率由机型和 ApplePPM 决定。
 - 未包含控制中心、充电、挂载、电池伪装、屏幕亮度、刷新率或高温告警拦截。
 
 ## 配置
@@ -23,4 +24,4 @@
 
 本地构建需要 Xcode、[roothide/theos](https://github.com/roothide/theos)、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性仍须在设备上验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
 
-此最小版本只拦截已观察到的 `MitigationController` CPU 预算与等级 setter 并在模式切换时请求重新计算。不同机型/iOS 版本可能不调用这些 selector；模式切换后的预算恢复也必须通过设备日志与实测确认。设备日志会输出 `[CTLowPower] loaded`、`settings loaded`、`MitigationController hook active`，可用来区分「没有注入」「偏好未读取」「控制器未命中」。测试前不要用于依赖稳定散热或性能的设备。若要达到原包的全覆盖路径，需要进一步针对目标设备确认私有 API 和恢复流程。
+此版本拦截已观察到的三类对象 CPU 等级与预算 setter，且只把 CPU 等级提高到 2，不覆盖系统更严格的等级。不同机型/iOS 版本可能不调用这些 selector；模式切换后的预算恢复也必须通过设备日志与实测确认。设备日志会输出 `[CTLowPower] loaded`、`settings loaded` 以及三个类各自的 `hook active`，可用来区分「没有注入」「偏好未读取」「CPU 对象未命中」。测试前不要用于依赖稳定散热或性能的设备。若要达到原包的全覆盖路径，需要进一步针对目标设备确认私有 API 和恢复流程。
