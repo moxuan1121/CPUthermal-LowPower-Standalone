@@ -14,7 +14,7 @@ jobs:
     env:
       THEOS: /tmp/theos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check source contract
         run: python3 tests/test_contract.py

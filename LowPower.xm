@@ -141,7 +141,7 @@ static void CTTrack(id controller) {
     CTTrack(self);
     %orig;
     if (!CTActive()) return;
-    if ([self respondsToSelector:@selector(setCPMSMitigationsEnabled:)])
+    if ([(id)self respondsToSelector:@selector(setCPMSMitigationsEnabled:)])
         ((void (*)(id, SEL, BOOL))objc_msgSend)(self, @selector(setCPMSMitigationsEnabled:), YES);
 }
 
