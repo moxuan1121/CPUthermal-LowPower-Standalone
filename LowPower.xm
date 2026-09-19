@@ -141,6 +141,10 @@ static void CTTrack(id controller) {
     %orig(CTActive() ? MIN(target, CTCapMW()) : target);
 }
 
+- (void)setCPULevel:(int)level {
+    %orig(CTActive() ? MAX(level, 2) : level);
+}
+
 - (void)setMaxCPUPowerTarget:(int)target useLegacyPath:(BOOL)legacy setProperty:(uintptr_t)property {
     %orig(CTActive() ? MIN(target, CTCapMW()) : target, legacy, property);
 }
