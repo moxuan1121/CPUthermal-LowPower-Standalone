@@ -17,6 +17,15 @@ assert "CTRefreshMode" in code
 assert "shouldApplyFullCPUProtection" not in code
 assert "setPackageLowPowerTarget" not in code
 assert "setPowerSaveActive" not in code
+assert "jbroot(@\"/var/mobile/Library/Preferences/" in code
+makefile = (root / "Makefile").read_text(encoding="utf-8")
+workflow = (root / ".github/workflows/package.yml").read_text(encoding="utf-8")
+control = (root / "control").read_text(encoding="utf-8")
+assert "THEOS_PACKAGE_SCHEME = roothide" in makefile
+assert "roothide/theos.git" in workflow
+assert "THEOS_PACKAGE_SCHEME=roothide" in workflow
+assert "Architecture: iphoneos-arm64e" in control
+assert "THEOS_PACKAGE_SCHEME=rootless" not in workflow
 
 h = 1469598103934665603
 for byte in b"com.example.game":

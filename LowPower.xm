@@ -1,10 +1,13 @@
 #import <Foundation/Foundation.h>
 #import <objc/message.h>
 #import <os/lock.h>
+#import <roothide.h>
 #import "Shared.h"
 
 // Independent preference domain; never reads or writes the original tweak's settings.
-static NSString *const CTPrefsPath = @"/var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist";
+static NSString *CTPrefsPath(void) {
+    return jbroot(@"/var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist");
+}
 static os_unfair_lock stateLock = OS_UNFAIR_LOCK_INIT;
 static BOOL enabled;
 static BOOL baseLow;
@@ -103,7 +106,7 @@ static void CTRefreshMode(void) {
 }
 
 static void CTLoadSettings(void) {
-    NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:CTPrefsPath];
+    NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:CTPrefsPath()];
     NSString *mode = [prefs[@"powerMode"] isKindOfClass:[NSString class]] ? prefs[@"powerMode"] : @"fullPower";
     NSString *strength = [prefs[@"lowPowerStrength"] isKindOfClass:[NSString class]] ? prefs[@"lowPowerStrength"] : @"standard";
     NSArray *full = [prefs[@"fullPowerApps"] isKindOfClass:[NSArray class]] ? prefs[@"fullPowerApps"] : @[];

@@ -1,4 +1,4 @@
-name: Package rootless DEB
+name: Package RootHide DEB
 
 on:
   push:
@@ -24,16 +24,24 @@ jobs:
 
       - name: Set up Theos and iOS SDK
         run: |
-          git clone --depth 1 --recursive https://github.com/theos/theos.git "$THEOS"
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
           git clone --depth 1 https://github.com/theos/sdks.git /tmp/theos-sdks
           cp -R /tmp/theos-sdks/iPhoneOS16.5.sdk "$THEOS/sdks/"
 
-      - name: Build rootless package
-        run: make clean package THEOS_PACKAGE_SCHEME=rootless FINALPACKAGE=1
+      - name: Build RootHide package
+        run: make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1
+
+      - name: Verify RootHide package
+        run: |
+          deb=$(find packages -maxdepth 1 -name '*.deb' -print -quit)
+          test -n "$deb"
+          test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
+          dpkg-deb -c "$deb" | grep -q 'CTLowPower.dylib'
+          dpkg-deb -c "$deb" | grep -q 'CTLowPowerForeground.dylib'
 
       - name: Upload DEB
         uses: actions/upload-artifact@v4
         with:
-          name: cputhermal-lowpower-rootless
+          name: cputhermal-lowpower-roothide
           path: packages/*.deb
           if-no-files-found: error

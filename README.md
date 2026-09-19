@@ -11,12 +11,12 @@
 
 ## 配置
 
-把 `preferences.example.plist` 复制到设备的 `/var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist`，填写真实 Bundle ID。`enabled` 缺省为 `false`；缺少配置时插件不启用限制。`powerMode` 可设 `lowPower` 或 `fullPower`。修改配置后发送 Darwin 通知 `com.huayuarc.cputhermal.lowpower/settingsChanged`，或重启 `thermalmonitord`。
+把 `preferences.example.plist` 复制到设备隐根内 `jbroot /var/mobile/Library/Preferences/com.huayuarc.cputhermal.lowpower.plist` 所指向的实际路径，填写真实 Bundle ID。不要放在真实 rootfs 的同名路径。`enabled` 缺省为 `false`；缺少配置时插件不启用限制。`powerMode` 可设 `lowPower` 或 `fullPower`。修改配置后发送 Darwin 通知 `com.huayuarc.cputhermal.lowpower/settingsChanged`，或重启 `thermalmonitord`。
 
 ## 构建与限制
 
-公开 GitHub 仓库的 Actions 页面提供 `Package rootless DEB` 工作流：推送到 `main` 或点击 **Run workflow** 后，在 macOS 上用 Theos 构建。构建通过后，在该次运行的 **Artifacts** 下载 `cputhermal-lowpower-rootless`，其中包含 DEB；不会自动发布 Release。
+公开 GitHub 仓库的 Actions 页面提供 `Package RootHide DEB` 工作流：推送到 `main` 或点击 **Run workflow** 后，在 macOS 上用 RootHide 的 Theos 分支构建。构建通过后，在该次运行的 **Artifacts** 下载 `cputhermal-lowpower-roothide`，其中包含 DEB；不会自动发布 Release，也不再构建普通 rootless 包。
 
-本地构建需要 Xcode、Theos、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=rootless FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性还没有验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
+本地构建需要 Xcode、[roothide/theos](https://github.com/roothide/theos)、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性仍须在设备上验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
 
 此最小版本只拦截已观察到的 `MitigationController` CPU 预算 setter 并在模式切换时请求重新计算。不同机型/iOS 版本可能不调用这些 selector；模式切换后的预算恢复也必须通过设备日志与实测确认。测试前不要用于依赖稳定散热或性能的设备。若要达到原包的全覆盖路径，需要进一步针对目标设备确认私有 API 和恢复流程。
