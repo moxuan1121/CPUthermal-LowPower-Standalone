@@ -19,7 +19,7 @@
 
 ## 构建与限制
 
-公开 GitHub 仓库的 Actions 页面提供 `Package RootHide DEB` 工作流：推送到 `main` 或点击 **Run workflow** 后，在 macOS 上用 RootHide 的 Theos 分支构建。构建通过后，在该次运行的 **Artifacts** 下载 `cputhermal-lowpower-roothide`，其中包含 DEB；不会自动发布 Release，也不再构建普通 rootless 包。
+公开 GitHub 仓库的 Actions 页面提供 `Package RootHide DEB` 工作流：推送到 `main` 或点击 **Run workflow** 后，在 macOS 上用 RootHide 的 Theos 分支构建。构建通过后，在该次运行的 **Artifacts** 下载 `cputhermal-lowpower-roothide`，其中包含 DEB；不会自动发布 Release，也不再构建普通 rootless 包。此包原生按 RootHide 方案构建，不依赖 `rootless-compat`。
 
 本地构建需要 Xcode、[roothide/theos](https://github.com/roothide/theos)、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性仍须在设备上验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
 

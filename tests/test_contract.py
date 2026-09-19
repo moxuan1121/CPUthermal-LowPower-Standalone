@@ -28,6 +28,7 @@ assert "THEOS_PACKAGE_SCHEME=roothide" in workflow
 assert "Architecture: iphoneos-arm64e" in control
 assert "THEOS_PACKAGE_SCHEME=rootless" not in workflow
 assert "preferenceloader" in control
+assert "rootless-compat" not in control
 
 settings = root / "Settings"
 info = plistlib.loads((settings / "Info.plist").read_bytes())
