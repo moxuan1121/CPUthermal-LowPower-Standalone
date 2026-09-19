@@ -198,7 +198,7 @@ static void CTTrackProduct(id product) {
 %hook MitigationController
 - (id)initForFastLoop:(BOOL)fastLoop noDisplay:(BOOL)noDisplay powerSaveParams:(id)saveParams powerZoneParams:(id)zoneParams {
     id result = %orig;
-    if (result) CTTrack(result);
+    if (result) { CTTrack(result); CTApplyKnownLevel(result); }
     return result;
 }
 
@@ -208,6 +208,7 @@ static void CTTrackProduct(id product) {
     if (!CTActive()) return;
     if ([(id)self respondsToSelector:@selector(setCPMSMitigationsEnabled:)])
         ((void (*)(id, SEL, BOOL))objc_msgSend)(self, @selector(setCPMSMitigationsEnabled:), YES);
+    CTApplyKnownLevel(self);
 }
 
 - (void)setCPULowPowerTarget:(int)target {

@@ -17,6 +17,8 @@ assert "MAX(level, 2)" in code
 assert "%hook CommonProduct" in code
 assert "%hook ApplePPMCPU" in code
 assert "CTApplyKnownLevel(ppm)" in code
+assert "CTApplyKnownLevel(result);" in code
+assert "CTApplyKnownLevel(self);" in code
 assert "level >= 0 && level < 2" in code
 assert "MIN(ceiling, CTCapPercent())" in code
 assert "CTRefreshMode" in code

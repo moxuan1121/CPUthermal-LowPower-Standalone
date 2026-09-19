@@ -24,4 +24,4 @@
 
 本地构建需要 Xcode、[roothide/theos](https://github.com/roothide/theos)、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性仍须在设备上验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
 
-此版本拦截已观察到的三类对象 CPU 等级与预算 setter，且只把 CPU 等级提高到 2，不覆盖系统更严格的等级。不同机型/iOS 版本可能不调用这些 selector；模式切换后的预算恢复也必须通过设备日志与实测确认。设备日志会输出 `[CTLowPower] loaded`、`settings loaded` 以及三个类各自的 `hook active`，可用来区分「没有注入」「偏好未读取」「CPU 对象未命中」。测试前不要用于依赖稳定散热或性能的设备。若要达到原包的全覆盖路径，需要进一步针对目标设备确认私有 API 和恢复流程。
+此版本拦截已观察到的三类对象 CPU 等级与预算 setter，并在 `MitigationController` 更新后读取当前 CPU 等级，仅在低于 2 时主动收紧到 2；不覆盖系统更严格的等级。不同机型/iOS 版本可能不调用这些 selector；模式切换后的预算恢复也必须通过设备日志与实测确认。设备日志会输出 `[CTLowPower] loaded`、`settings loaded` 以及三个类各自的 `hook active`，可用来区分「没有注入」「偏好未读取」「CPU 对象未命中」。测试前不要用于依赖稳定散热或性能的设备。若要达到原包的全覆盖路径，需要进一步针对目标设备确认私有 API 和恢复流程。
