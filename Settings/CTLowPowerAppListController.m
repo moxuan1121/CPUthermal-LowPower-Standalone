@@ -27,6 +27,7 @@
 }
 
 - (NSArray<NSDictionary *> *)installedApps {
+    @try {
     Class cls = objc_getClass("LSApplicationWorkspace");
     id workspace = nil;
     SEL shared = sel_registerName("defaultWorkspace");
@@ -47,6 +48,10 @@
     return [apps.allValues sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
         return [a[CTS("name")] localizedCaseInsensitiveCompare:b[CTS("name")]];
     }];
+    } @catch (NSException *exception) {
+        (void)exception;
+        return [NSArray array];
+    }
 }
 
 - (NSMutableSet<NSString *> *)selectedApps {

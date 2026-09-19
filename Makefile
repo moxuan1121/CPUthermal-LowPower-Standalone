@@ -21,6 +21,7 @@ BUNDLE_NAME = CTLowPowerSettings
 CTLowPowerSettings_FILES = Settings/CTLowPowerRootListController.m Settings/CTLowPowerAppListController.m
 CTLowPowerSettings_INSTALL_PATH = /Library/PreferenceBundles
 CTLowPowerSettings_CFLAGS = -fobjc-arc -ISettings
+CTLowPowerSettings_CODESIGN_FLAGS = -SSettings/Settings.entitlements
 CTLowPowerSettings_FRAMEWORKS = Foundation UIKit
 CTLowPowerSettings_PRIVATE_FRAMEWORKS = Preferences
 CTLowPowerSettings_LDFLAGS = -L$(THEOS_VENDOR_LIBRARY_PATH)/iphone/roothide -lroothide

@@ -36,6 +36,8 @@ items = plistlib.loads((settings / "Root.plist").read_bytes())["items"]
 assert info["NSPrincipalClass"] == entry["detail"] == "CTLowPowerRootListController"
 assert entry["bundle"] == info["CFBundleExecutable"] == "CTLowPowerSettings"
 assert entry["icon"] == "icon.png"
+entitlements = plistlib.loads((settings / "Settings.entitlements").read_bytes())
+assert entitlements["platform-application"] is True
 assert {item.get("key") for item in items if "key" in item} == {"enabled", "powerMode", "lowPowerStrength"}
 assert {item.get("detail") for item in items if "detail" in item} == {"CTFullPowerAppListController", "CTLowPowerAppListController"}
 for filename, size in (("icon.png", 29), ("icon@2x.png", 58), ("icon@3x.png", 87)):
@@ -44,6 +46,7 @@ for filename, size in (("icon.png", 29), ("icon@2x.png", 58), ("icon@3x.png", 87
     assert struct.unpack(">II", data[16:24]) == (size, size)
 for filename in ("CTLowPowerRootListController.m", "CTLowPowerAppListController.m"):
     assert '@"' not in (settings / filename).read_text(encoding="utf-8")
+assert '@"' not in (settings / "CTSettingsPrefs.h").read_text(encoding="utf-8")
 
 h = 1469598103934665603
 for byte in b"com.example.game":
