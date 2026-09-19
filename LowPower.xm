@@ -24,14 +24,15 @@ static BOOL sawController;
 static BOOL sawPPM;
 static BOOL sawProduct;
 static BOOL requestedLevel2;
+static BOOL requestedBudget;
 
 static void CTWriteStatus(void) {
     @synchronized ([NSProcessInfo processInfo]) {
         os_unfair_lock_lock(&stateLock);
         NSString *report = [NSString stringWithFormat:
-            @"version=0.5.2\nprocess=%@\nprefsPath=%@\nprefsRead=%d\nenabled=%d\nwhitelistEnabled=%d\neffectiveLow=%d\nmitigationHook=%d\nppmHook=%d\nproductHook=%d\nlevel2Requested=%d\n",
+            @"version=0.5.3\nprocess=%@\nprefsPath=%@\nprefsRead=%d\nenabled=%d\nwhitelistEnabled=%d\neffectiveLow=%d\nmitigationHook=%d\nppmHook=%d\nproductHook=%d\nlevel2Requested=%d\nbudgetRequested=%d\n",
             [NSProcessInfo processInfo].processName, CTPrefsPath(), prefsRead, enabled,
-            whitelistEnabled, effectiveLow, sawController, sawPPM, sawProduct, requestedLevel2];
+            whitelistEnabled, effectiveLow, sawController, sawPPM, sawProduct, requestedLevel2, requestedBudget];
         os_unfair_lock_unlock(&stateLock);
         NSString *path = [[CTPrefsPath() stringByDeletingPathExtension] stringByAppendingString:@".status.txt"];
         NSError *error = nil;
@@ -82,18 +83,35 @@ static void CTCallUpdateCPU(id controller) {
 }
 
 static void CTApplyKnownLevel(id object) {
-    // Only raise a readable native level; never replace a stricter thermal level with 2.
-    if (!CTActive() || ![object respondsToSelector:@selector(CPULevel)] ||
-        ![object respondsToSelector:@selector(setCPULevel:)]) return;
-    int level = ((int (*)(id, SEL))objc_msgSend)(object, @selector(CPULevel));
-    if (level >= 0 && level < 2) {
-        ((void (*)(id, SEL, int))objc_msgSend)(object, @selector(setCPULevel:), 2);
+    if (!CTActive() || ![object respondsToSelector:@selector(setCPULevel:)]) return;
+    // CommonProduct may have no getter; the original tweak still sends level 2 to its setter.
+    if ([object respondsToSelector:@selector(CPULevel)]) {
+        int level = ((int (*)(id, SEL))objc_msgSend)(object, @selector(CPULevel));
+        if (level < 0 || level >= 2) return;
+    }
+    ((void (*)(id, SEL, int))objc_msgSend)(object, @selector(setCPULevel:), 2);
+    os_unfair_lock_lock(&stateLock);
+    BOOL firstRequest = !requestedLevel2;
+    requestedLevel2 = YES;
+    os_unfair_lock_unlock(&stateLock);
+    if (firstRequest) CTWriteStatus();
+}
+
+static void CTApplyController(id controller) {
+    if (!CTActive()) return;
+    if ([controller respondsToSelector:@selector(setCPMSMitigationsEnabled:)])
+        ((void (*)(id, SEL, BOOL))objc_msgSend)(controller, @selector(setCPMSMitigationsEnabled:), YES);
+    if ([controller respondsToSelector:@selector(setCPULowPowerTarget:)]) {
+        ((void (*)(id, SEL, int))objc_msgSend)(controller, @selector(setCPULowPowerTarget:), CTCapMW());
         os_unfair_lock_lock(&stateLock);
-        BOOL firstRequest = !requestedLevel2;
-        requestedLevel2 = YES;
+        BOOL firstRequest = !requestedBudget;
+        requestedBudget = YES;
         os_unfair_lock_unlock(&stateLock);
         if (firstRequest) CTWriteStatus();
     }
+    if ([controller respondsToSelector:@selector(setCPUPowerZoneTarget:)])
+        ((void (*)(id, SEL, int))objc_msgSend)(controller, @selector(setCPUPowerZoneTarget:), CTCapPercent());
+    CTApplyKnownLevel(controller);
 }
 
 static void CTReapply(void) {
@@ -103,7 +121,7 @@ static void CTReapply(void) {
     ppmSnapshot = ppmInstances.allObjects;
     productSnapshot = products.allObjects;
     os_unfair_lock_unlock(&stateLock);
-    for (id controller in snapshot) CTCallUpdateCPU(controller);
+    for (id controller in snapshot) { CTApplyController(controller); CTCallUpdateCPU(controller); }
     for (id ppm in ppmSnapshot) { CTCallUpdateCPU(ppm); CTApplyKnownLevel(ppm); }
     for (id product in productSnapshot) CTApplyKnownLevel(product);
 }
@@ -223,17 +241,15 @@ static void CTTrackProduct(id product) {
 %hook MitigationController
 - (id)initForFastLoop:(BOOL)fastLoop noDisplay:(BOOL)noDisplay powerSaveParams:(id)saveParams powerZoneParams:(id)zoneParams {
     id result = %orig;
-    if (result) { CTTrack(result); CTApplyKnownLevel(result); }
+    if (result) { CTTrack(result); CTApplyController(result); }
     return result;
 }
 
 - (void)updateCPU {
     CTTrack(self);
+    CTApplyController(self);
     %orig;
-    if (!CTActive()) return;
-    if ([(id)self respondsToSelector:@selector(setCPMSMitigationsEnabled:)])
-        ((void (*)(id, SEL, BOOL))objc_msgSend)(self, @selector(setCPMSMitigationsEnabled:), YES);
-    CTApplyKnownLevel(self);
+    CTApplyController(self);
 }
 
 - (void)setCPULowPowerTarget:(int)target {

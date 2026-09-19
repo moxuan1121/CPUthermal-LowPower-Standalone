@@ -19,7 +19,7 @@ assert "%hook ApplePPMCPU" in code
 assert "CTApplyKnownLevel(ppm)" in code
 assert "CTApplyKnownLevel(result);" in code
 assert "CTApplyKnownLevel(self);" in code
-assert "level >= 0 && level < 2" in code
+assert "level < 0 || level >= 2" in code
 assert "MIN(ceiling, CTCapPercent())" in code
 assert "CTRefreshMode" in code
 assert "return !selected || CTContainsHash(whitelist, CTForegroundHash());" in code
@@ -32,6 +32,9 @@ assert 'stringByAppendingString:@".status.txt"' in code
 assert "prefsRead = prefs != nil;" in code
 assert "if (shouldLog) { NSLog" in code
 assert "if (firstRequest) CTWriteStatus();" in code
+assert "CTApplyController(result);" in code
+assert "CTApplyController(self);" in code
+assert "budgetRequested=%d" in code
 makefile = (root / "Makefile").read_text(encoding="utf-8")
 workflow = (root / ".github/workflows/package.yml").read_text(encoding="utf-8")
 control = (root / "control").read_text(encoding="utf-8")
