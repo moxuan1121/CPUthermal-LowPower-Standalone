@@ -1,6 +1,7 @@
 #import <UIKit/UIKit.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
+#include <initializer_list>
 #import "Shared.h"
 
 static uint64_t lastPublished;
