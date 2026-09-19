@@ -93,10 +93,3 @@
 }
 
 @end
-
-@interface CTFullPowerAppListController : CTLowPowerAppListController
-@end
-
-@implementation CTFullPowerAppListController
-- (NSString *)listKey { return CTS("fullPowerApps"); }
-@end

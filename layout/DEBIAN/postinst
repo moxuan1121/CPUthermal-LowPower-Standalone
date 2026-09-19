@@ -1,0 +1,6 @@
+#!/bin/sh
+# A running thermalmonitord cannot load a newly installed tweak until it restarts.
+if [ "$1" = configure ]; then
+    killall -q thermalmonitord 2>/dev/null || true
+fi
+exit 0

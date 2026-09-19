@@ -5,8 +5,8 @@ import struct
 root = Path(__file__).resolve().parents[1]
 sample = plistlib.loads((root / "preferences.example.plist").read_bytes())
 assert sample["enabled"] is True
-assert sample["powerMode"] == "lowPower"
-assert set(sample) == {"enabled", "powerMode", "lowPowerStrength", "fullPowerApps", "lowPowerApps"}
+assert sample["whitelistEnabled"] is False
+assert set(sample) == {"enabled", "whitelistEnabled", "lowPowerStrength", "lowPowerApps"}
 assert plistlib.loads(plistlib.dumps(sample)) == sample
 for name in ("CTLowPower.plist", "CTLowPowerForeground.plist"):
     assert "Filter" in plistlib.loads((root / name).read_bytes())
@@ -15,6 +15,8 @@ code = (root / "LowPower.xm").read_text(encoding="utf-8")
 assert "MIN(target, CTCapMW())" in code
 assert "MIN(ceiling, CTCapPercent())" in code
 assert "CTRefreshMode" in code
+assert "return !selected || CTContainsHash(whitelist, CTForegroundHash());" in code
+assert '"com.apple.springboard.hasBlankedScreen"' not in code
 assert "shouldApplyFullCPUProtection" not in code
 assert "setPackageLowPowerTarget" not in code
 assert "setPowerSaveActive" not in code
@@ -29,6 +31,7 @@ assert "Architecture: iphoneos-arm64e" in control
 assert "THEOS_PACKAGE_SCHEME=rootless" not in workflow
 assert "preferenceloader" in control
 assert "rootless-compat" not in control
+assert "killall -q thermalmonitord" in (root / "layout/DEBIAN/postinst").read_text(encoding="utf-8")
 
 settings = root / "Settings"
 info = plistlib.loads((settings / "Info.plist").read_bytes())
@@ -39,12 +42,14 @@ assert entry["bundle"] == info["CFBundleExecutable"] == "CTLowPowerSettings"
 assert entry["icon"] == "icon.png"
 entitlements = plistlib.loads((settings / "Settings.entitlements").read_bytes())
 assert entitlements["platform-application"] is True
-assert {item.get("key") for item in items if "key" in item} == {"enabled", "powerMode", "lowPowerStrength"}
-assert {item.get("detail") for item in items if "detail" in item} == {"CTFullPowerAppListController", "CTLowPowerAppListController"}
+assert {item.get("key") for item in items if "key" in item} == {"enabled", "whitelistEnabled", "lowPowerStrength"}
+assert next(item for item in items if item.get("key") == "whitelistEnabled")["cell"] == "PSSwitchCell"
+assert {item.get("detail") for item in items if "detail" in item} == {"CTLowPowerAppListController"}
 for filename, size in (("icon.png", 29), ("icon@2x.png", 58), ("icon@3x.png", 87)):
     data = (settings / filename).read_bytes()
     assert data[:8] == b"\x89PNG\r\n\x1a\n"
     assert struct.unpack(">II", data[16:24]) == (size, size)
+    assert data[25] == 6  # RGBA: rounded corners have transparency.
 for filename in ("CTLowPowerRootListController.m", "CTLowPowerAppListController.m"):
     assert '@"' not in (settings / filename).read_text(encoding="utf-8")
 assert '@"' not in (settings / "CTSettingsPrefs.h").read_text(encoding="utf-8")

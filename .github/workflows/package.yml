@@ -37,6 +37,7 @@ jobs:
           test -n "$deb"
           test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
           ! dpkg-deb -f "$deb" | grep -q 'rootless-compat'
+          dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './postinst'
           dpkg-deb -c "$deb" | grep -q 'CTLowPower.dylib'
           dpkg-deb -c "$deb" | grep -q 'CTLowPowerForeground.dylib'
           dpkg-deb -c "$deb" | grep -q 'CTLowPowerSettings.bundle/Info.plist'

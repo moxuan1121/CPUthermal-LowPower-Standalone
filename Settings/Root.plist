@@ -4,7 +4,7 @@
     <dict>
         <key>cell</key><string>PSGroupCell</string>
         <key>label</key><string>CPU 低功耗</string>
-        <key>footerText</key><string>独立于原 CPUthermal。关闭后保持系统原生温控；低功耗仅收紧 CPU 预算，不解除系统热保护。</string>
+        <key>footerText</key><string>独立于原 CPUthermal。启用插件后，白名单模式关闭＝全局低功耗；开启＝仅白名单应用低功耗。始终保留系统热保护。</string>
     </dict>
     <dict>
         <key>cell</key><string>PSSwitchCell</string>
@@ -13,16 +13,14 @@
         <key>label</key><string>启用插件</string>
     </dict>
     <dict>
-        <key>cell</key><string>PSSegmentCell</string>
-        <key>key</key><string>powerMode</string>
-        <key>default</key><string>fullPower</string>
-        <key>label</key><string>常驻模式</string>
-        <key>validTitles</key><array><string>原生</string><string>低功耗</string></array>
-        <key>validValues</key><array><string>fullPower</string><string>lowPower</string></array>
+        <key>cell</key><string>PSSwitchCell</string>
+        <key>key</key><string>whitelistEnabled</string>
+        <key>default</key><false/>
+        <key>label</key><string>白名单模式</string>
     </dict>
     <dict>
         <key>cell</key><string>PSGroupCell</string>
-        <key>footerText</key><string>省电：2.0W / 35%；标准：2.5W / 45%；性能：3.0W / 55%。熄屏时优先低功耗。</string>
+        <key>footerText</key><string>省电：2.0W / 35%；标准：2.5W / 45%；性能：3.0W / 55%。</string>
     </dict>
     <dict>
         <key>cell</key><string>PSSegmentCell</string>
@@ -34,17 +32,12 @@
     </dict>
     <dict>
         <key>cell</key><string>PSGroupCell</string>
-        <key>label</key><string>应用名单</string>
-        <key>footerText</key><string>原生表示回到 iOS 自身温控，不是解除温控。熄屏时两种名单都不会覆盖低功耗。</string>
+        <key>label</key><string>白名单应用</string>
+        <key>footerText</key><string>仅白名单模式开启时使用。未选择应用时，所有前台应用均不施加插件的低功耗限制。</string>
     </dict>
     <dict>
         <key>cell</key><string>PSLinkCell</string>
-        <key>label</key><string>低功耗模式的原生例外</string>
-        <key>detail</key><string>CTFullPowerAppListController</string>
-    </dict>
-    <dict>
-        <key>cell</key><string>PSLinkCell</string>
-        <key>label</key><string>原生模式的低功耗应用</string>
+        <key>label</key><string>选择白名单应用</string>
         <key>detail</key><string>CTLowPowerAppListController</string>
     </dict>
 </array></dict></plist>

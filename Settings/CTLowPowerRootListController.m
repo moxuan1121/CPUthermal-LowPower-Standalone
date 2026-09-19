@@ -16,9 +16,11 @@
 - (id)readPreferenceValue:(PSSpecifier *)specifier {
     NSString *key = [specifier propertyForKey:CTS("key")];
     if (!key) return nil;
-    id value = CTSettingsReadPrefs()[key];
+    NSDictionary *prefs = CTSettingsReadPrefs();
+    id value = prefs[key];
     if (value) return value;
-    if ([key isEqualToString:CTS("powerMode")]) return CTS("fullPower");
+    if ([key isEqualToString:CTS("whitelistEnabled")])
+        return [NSNumber numberWithBool:[prefs[CTS("powerMode")] isEqualToString:CTS("fullPower")]];
     if ([key isEqualToString:CTS("lowPowerStrength")]) return CTS("standard");
     return [NSNumber numberWithBool:NO];
 }
