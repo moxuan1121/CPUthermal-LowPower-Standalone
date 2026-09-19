@@ -28,6 +28,10 @@ assert "shouldApplyFullCPUProtection" not in code
 assert "setPackageLowPowerTarget" not in code
 assert "setPowerSaveActive" not in code
 assert "jbroot(@\"/var/mobile/Library/Preferences/" in code
+assert 'stringByAppendingString:@".status.txt"' in code
+assert "prefsRead = prefs != nil;" in code
+assert "if (shouldLog) { NSLog" in code
+assert "if (firstRequest) CTWriteStatus();" in code
 makefile = (root / "Makefile").read_text(encoding="utf-8")
 workflow = (root / ".github/workflows/package.yml").read_text(encoding="utf-8")
 control = (root / "control").read_text(encoding="utf-8")

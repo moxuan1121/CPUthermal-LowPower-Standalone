@@ -19,6 +19,26 @@ static NSHashTable *controllers;
 static NSHashTable *ppmInstances;
 static NSHashTable *products;
 static BOOL clearPending;
+static BOOL prefsRead;
+static BOOL sawController;
+static BOOL sawPPM;
+static BOOL sawProduct;
+static BOOL requestedLevel2;
+
+static void CTWriteStatus(void) {
+    @synchronized ([NSProcessInfo processInfo]) {
+        os_unfair_lock_lock(&stateLock);
+        NSString *report = [NSString stringWithFormat:
+            @"version=0.5.2\nprocess=%@\nprefsPath=%@\nprefsRead=%d\nenabled=%d\nwhitelistEnabled=%d\neffectiveLow=%d\nmitigationHook=%d\nppmHook=%d\nproductHook=%d\nlevel2Requested=%d\n",
+            [NSProcessInfo processInfo].processName, CTPrefsPath(), prefsRead, enabled,
+            whitelistEnabled, effectiveLow, sawController, sawPPM, sawProduct, requestedLevel2];
+        os_unfair_lock_unlock(&stateLock);
+        NSString *path = [[CTPrefsPath() stringByDeletingPathExtension] stringByAppendingString:@".status.txt"];
+        NSError *error = nil;
+        if (![report writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:&error])
+            NSLog(@"[CTLowPower] status write failed: %@", error);
+    }
+}
 
 static BOOL CTActive(void) {
     os_unfair_lock_lock(&stateLock);
@@ -66,8 +86,14 @@ static void CTApplyKnownLevel(id object) {
     if (!CTActive() || ![object respondsToSelector:@selector(CPULevel)] ||
         ![object respondsToSelector:@selector(setCPULevel:)]) return;
     int level = ((int (*)(id, SEL))objc_msgSend)(object, @selector(CPULevel));
-    if (level >= 0 && level < 2)
+    if (level >= 0 && level < 2) {
         ((void (*)(id, SEL, int))objc_msgSend)(object, @selector(setCPULevel:), 2);
+        os_unfair_lock_lock(&stateLock);
+        BOOL firstRequest = !requestedLevel2;
+        requestedLevel2 = YES;
+        os_unfair_lock_unlock(&stateLock);
+        if (firstRequest) CTWriteStatus();
+    }
 }
 
 static void CTReapply(void) {
@@ -89,7 +115,7 @@ static void CTApplyDesiredMode(void) {
     changed = effectiveLow != desired;
     effectiveLow = desired;
     os_unfair_lock_unlock(&stateLock);
-    if (changed) CTReapply();
+    if (changed) { CTReapply(); CTWriteStatus(); }
 }
 
 static void CTRefreshMode(void) {
@@ -119,43 +145,42 @@ static void CTLoadSettings(void) {
     capMW = power;
     capPercent = percent;
     lowPowerApps = [low copy];
+    prefsRead = prefs != nil;
     os_unfair_lock_unlock(&stateLock);
     CTRefreshMode();
     CTReapply();
+    CTWriteStatus();
     NSLog(@"[CTLowPower] settings loaded: enabled=%d whitelist=%d apps=%lu", enabled, whitelist, (unsigned long)low.count);
 }
 
 static void CTTrack(id controller) {
-    static BOOL loggedController;
     os_unfair_lock_lock(&stateLock);
     if (!controllers) controllers = [NSHashTable weakObjectsHashTable];
     [controllers addObject:controller];
-    BOOL shouldLog = !loggedController;
-    loggedController = YES;
+    BOOL shouldLog = !sawController;
+    sawController = YES;
     os_unfair_lock_unlock(&stateLock);
-    if (shouldLog) NSLog(@"[CTLowPower] MitigationController hook active");
+    if (shouldLog) { NSLog(@"[CTLowPower] MitigationController hook active"); CTWriteStatus(); }
 }
 
 static void CTTrackPPM(id ppm) {
-    static BOOL logged;
     os_unfair_lock_lock(&stateLock);
     if (!ppmInstances) ppmInstances = [NSHashTable weakObjectsHashTable];
     [ppmInstances addObject:ppm];
-    BOOL shouldLog = !logged;
-    logged = YES;
+    BOOL shouldLog = !sawPPM;
+    sawPPM = YES;
     os_unfair_lock_unlock(&stateLock);
-    if (shouldLog) NSLog(@"[CTLowPower] ApplePPMCPU hook active; level getter=%d", [ppm respondsToSelector:@selector(CPULevel)]);
+    if (shouldLog) { NSLog(@"[CTLowPower] ApplePPMCPU hook active; level getter=%d", [ppm respondsToSelector:@selector(CPULevel)]); CTWriteStatus(); }
 }
 
 static void CTTrackProduct(id product) {
-    static BOOL logged;
     os_unfair_lock_lock(&stateLock);
     if (!products) products = [NSHashTable weakObjectsHashTable];
     [products addObject:product];
-    BOOL shouldLog = !logged;
-    logged = YES;
+    BOOL shouldLog = !sawProduct;
+    sawProduct = YES;
     os_unfair_lock_unlock(&stateLock);
-    if (shouldLog) NSLog(@"[CTLowPower] CommonProduct hook active; level getter=%d", [product respondsToSelector:@selector(CPULevel)]);
+    if (shouldLog) { NSLog(@"[CTLowPower] CommonProduct hook active; level getter=%d", [product respondsToSelector:@selector(CPULevel)]); CTWriteStatus(); }
 }
 
 %hook CommonProduct
