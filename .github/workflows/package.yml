@@ -1,0 +1,39 @@
+name: Package rootless DEB
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-latest
+    env:
+      THEOS: ${{ runner.temp }}/theos
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check source contract
+        run: python3 tests/test_contract.py
+
+      - name: Install build dependencies
+        run: brew install ldid dpkg xz
+
+      - name: Set up Theos and iOS SDK
+        run: |
+          git clone --depth 1 --recursive https://github.com/theos/theos.git "$THEOS"
+          git clone --depth 1 https://github.com/theos/sdks.git "${{ runner.temp }}/theos-sdks"
+          cp -R "${{ runner.temp }}/theos-sdks/iPhoneOS16.5.sdk" "$THEOS/sdks/"
+
+      - name: Build rootless package
+        run: make clean package THEOS_PACKAGE_SCHEME=rootless FINALPACKAGE=1
+
+      - name: Upload DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: cputhermal-lowpower-rootless
+          path: packages/*.deb
+          if-no-files-found: error

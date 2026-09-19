@@ -1,0 +1,9 @@
+Package: com.huayuarc.cputhermal.lowpower.standalone
+Name: CPUthermal Low Power Standalone
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: CPU low-power budget with foreground application exceptions; native thermal protection remains active.
+Maintainer: Local reconstruction
+Section: Tweaks
+Depends: mobilesubstrate
+Conflicts: com.huayuarc.cputhermal
