@@ -34,15 +34,18 @@ jobs:
           test -n "$deb"
           test "$(dpkg-deb -f "$deb" Package)" = com.huayuarc.cputhermal
           test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
-          ! dpkg-deb -f "$deb" | grep -q rootless-compat
-          dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './postinst'
-          dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './prerm'
-          dpkg-deb -c "$deb" | grep -q 'CPUthermal.dylib'
-          dpkg-deb -c "$deb" | grep -q 'CPUthermalSettings.bundle/Info.plist'
-          dpkg-deb -c "$deb" | grep -q 'CPUthermalSettings.bundle/icon@3x.png'
-          dpkg-deb -c "$deb" | grep -q 'LaunchDaemons/com.huayuarc.cputhermal.mount.plist'
-          dpkg-deb -c "$deb" | grep -q 'usr/local/bin/CPUthermalMountTool'
-          ! dpkg-deb -c "$deb" | grep -q 'var/jb/'
+          [[ "$(dpkg-deb -f "$deb" Depends)" != *rootless-compat* ]]
+          control_files=$(dpkg-deb --ctrl-tarfile "$deb" | tar -tf -)
+          [[ "$control_files" == *./postinst* && "$control_files" == *./prerm* ]]
+          package_files=$(dpkg-deb -c "$deb")
+          for tweak in CPUthermal CPUthermalPrefHook CPUthermalFaceDownLock CPUthermalRefreshRate CPUthermalDisplay; do
+            [[ "$package_files" == *"DynamicLibraries/$tweak.dylib"* ]]
+          done
+          [[ "$package_files" == *CPUthermalSettings.bundle/Info.plist* ]]
+          [[ "$package_files" == *CPUthermalSettings.bundle/icon@3x.png* ]]
+          [[ "$package_files" == *LaunchDaemons/com.huayuarc.cputhermal.mount.plist* ]]
+          [[ "$package_files" == *usr/local/bin/CPUthermalMountTool* ]]
+          [[ "$package_files" != *var/jb/* ]]
 
       - name: Upload RootHide DEB
         uses: actions/upload-artifact@v4
