@@ -32,6 +32,9 @@ assert "if (firstRequest) CTWriteStatus();" in code
 assert "CTApplyController(result);" in code
 assert "CTApplyController(self);" in code
 assert "budgetRequested=%d" in code
+assert "active=%d" in code
+assert "prefsSource=%@" in code
+assert "appliedZoneTarget=%d" in code
 makefile = (root / "Makefile").read_text(encoding="utf-8")
 workflow = (root / ".github/workflows/package.yml").read_text(encoding="utf-8")
 control = (root / "control").read_text(encoding="utf-8")
@@ -50,7 +53,9 @@ assert "killall -q thermalmonitord" in (root / "layout/DEBIAN/postinst").read_te
 settings = root / "Settings"
 info = plistlib.loads((settings / "Info.plist").read_bytes())
 entry = plistlib.loads((root / "layout/Library/PreferenceLoader/Preferences/CPULowPowerSettings.plist").read_bytes())["entry"]
-items = plistlib.loads((settings / "Root.plist").read_bytes())["items"]
+root_plist = plistlib.loads((settings / "Root.plist").read_bytes())
+assert root_plist["title"] == "CPULowPower"
+items = root_plist["items"]
 assert info["NSPrincipalClass"] == entry["detail"] == "CTLowPowerRootListController"
 assert entry["bundle"] == info["CFBundleExecutable"] == "CPULowPowerSettings"
 assert entry["label"] == "CPULowPower"

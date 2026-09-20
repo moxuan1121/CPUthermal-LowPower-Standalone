@@ -24,4 +24,4 @@
 
 本地构建需要 Xcode、[roothide/theos](https://github.com/roothide/theos)、iPhoneOS16.5 SDK，以及 `ldid`、`dpkg`、`xz`：`make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1`。RootHide 的路径、签名和注入兼容性仍须在设备上验证。**当前 Windows 环境未安装 Theos，也未真机验证。**
 
-0.6.0 只控制 CPU 预算，不再写固定 CPU 等级 2 或固定 mW 目标。`thermalmonitord` 会在隐根 `/var/mobile/Library/Preferences/com.mox1121.cpulowpower.status.txt` 写状态；在设备终端运行 `cat /var/mobile/Library/Preferences/com.mox1121.cpulowpower.status.txt` 可查看屏幕状态、档位、上限、原生目标和控制器是否命中。`budgetRequested=1` 只表示方法被调用，**不等于已证实物理频率变化**。请逐档实测锁屏、解锁与开关切换，并留意设备温度。私有通知和 CPU 控制接口可能随 iOS 版本变化。
+0.6.1 只控制 CPU 预算，不再写固定 CPU 等级 2 或固定 mW 目标，并补齐设置页顶层标题。`thermalmonitord` 会在隐根 `/var/mobile/Library/Preferences/com.mox1121.cpulowpower.status.txt` 写状态；在设备终端运行 `cat /var/mobile/Library/Preferences/com.mox1121.cpulowpower.status.txt` 可查看屏幕状态、档位、上限、实际送入预算 setter 的值，以及新/旧配置来源。`active=0` 表示总开关或白名单条件未启用；`budgetRequested=1` 只表示方法曾被调用，**不等于已证实物理频率变化**。请在同一负载下逐档实测锁屏、解锁与开关切换，并留意设备温度。私有通知和 CPU 控制接口可能随 iOS 版本变化。

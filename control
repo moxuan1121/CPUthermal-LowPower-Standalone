@@ -1,6 +1,6 @@
 Package: com.mox1121.cpulowpower
 Name: CPULowPower
-Version: 0.6.0
+Version: 0.6.1
 Architecture: iphoneos-arm64e
 Description: CPU low-power budget with optional foreground application whitelist; native thermal protection remains active.
 Maintainer: Local reconstruction

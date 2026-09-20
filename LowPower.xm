@@ -25,18 +25,21 @@ static NSArray<NSString *> *lowPowerApps;
 static NSHashTable *controllers;
 static BOOL clearPending;
 static BOOL prefsRead;
+static NSString *prefsSource;
+static unsigned settingsReloads;
 static BOOL sawController;
 static BOOL requestedBudget;
+static int appliedZoneTarget = -1;
 
 static void CTWriteStatus(void) {
     @synchronized ([NSProcessInfo processInfo]) {
         os_unfair_lock_lock(&stateLock);
         NSString *report = [NSString stringWithFormat:
-            @"version=0.6.0\nprocess=%@\nprefsPath=%@\nprefsRead=%d\nenabled=%d\nwhitelistEnabled=%d\neffectiveLow=%d\nscreenBlanked=%d\nprofile=%@\nceilingPercent=%d\nnativeZoneTarget=%d\nmitigationHook=%d\nbudgetRequested=%d\n",
-            [NSProcessInfo processInfo].processName, CTPrefsPath(), prefsRead, enabled,
-            whitelistEnabled, effectiveLow, screenBlanked,
+            @"version=0.6.1\nprocess=%@\nprefsPath=%@\nprefsRead=%d\nprefsSource=%@\nsettingsReloads=%u\nenabled=%d\neffectiveLow=%d\nactive=%d\nwhitelistEnabled=%d\nscreenBlanked=%d\nprofile=%@\nceilingPercent=%d\nnativeZoneTarget=%d\nappliedZoneTarget=%d\nmitigationHook=%d\nbudgetRequested=%d\n",
+            [NSProcessInfo processInfo].processName, CTPrefsPath(), prefsRead, prefsSource, settingsReloads,
+            enabled, effectiveLow, enabled && effectiveLow, whitelistEnabled, screenBlanked,
             screenBlanked ? lockStrength : awakeStrength, capPercent, nativeZoneTarget,
-            sawController, requestedBudget];
+            appliedZoneTarget, sawController, requestedBudget];
         os_unfair_lock_unlock(&stateLock);
         NSString *path = [[CTPrefsPath() stringByDeletingPathExtension] stringByAppendingString:@".status.txt"];
         NSError *error = nil;
@@ -136,6 +139,7 @@ static void CTRefreshMode(void) {
 
 static void CTLoadSettings(void) {
     NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:CTPrefsPath()];
+    BOOL fromNewPath = prefs != nil;
     if (!prefs) prefs = [NSDictionary dictionaryWithContentsOfFile:CTOldPrefsPath()];
     NSString *strength = [prefs[@"lowPowerStrength"] isKindOfClass:[NSString class]] ? prefs[@"lowPowerStrength"] : @"standard";
     NSString *sleepStrength = [prefs[@"lockStrength"] isKindOfClass:[NSString class]] ? prefs[@"lockStrength"] : @"saver";
@@ -149,6 +153,8 @@ static void CTLoadSettings(void) {
     lockStrength = [sleepStrength copy];
     lowPowerApps = [low copy];
     prefsRead = prefs != nil;
+    prefsSource = fromNewPath ? @"new" : prefs ? @"legacy" : @"missing";
+    settingsReloads++;
     os_unfair_lock_unlock(&stateLock);
     CTRefreshMode();
     CTReapply();
@@ -201,7 +207,11 @@ static void CTTrack(id controller) {
         nativeZoneTarget = target;
         os_unfair_lock_unlock(&stateLock);
     }
-    %orig(CTActive() ? MIN(target, CTCapPercent()) : target);
+    int applied = CTActive() ? MIN(target, CTCapPercent()) : target;
+    os_unfair_lock_lock(&stateLock);
+    appliedZoneTarget = applied;
+    os_unfair_lock_unlock(&stateLock);
+    %orig(applied);
 }
 
 - (void)setCPUPowerCeiling:(int)ceiling fromDecisionSource:(uintptr_t)source {
