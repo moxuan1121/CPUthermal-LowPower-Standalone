@@ -1,0 +1,52 @@
+name: Package CPUthermal for RootHide
+
+on:
+  push:
+    branches: [restore/cputhermal-da6832e]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-latest
+    env:
+      THEOS: /tmp/theos
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: brew install ldid dpkg xz
+
+      - name: Set up RootHide Theos and iOS SDK
+        run: |
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$THEOS"
+          git clone --depth 1 https://github.com/theos/sdks.git /tmp/theos-sdks
+          cp -R /tmp/theos-sdks/iPhoneOS16.5.sdk "$THEOS/sdks/"
+
+      - name: Build RootHide DEB
+        run: make clean package THEOS_PACKAGE_SCHEME=roothide FINALPACKAGE=1
+
+      - name: Verify package
+        run: |
+          deb=$(find packages -maxdepth 1 -name '*.deb' -print -quit)
+          test -n "$deb"
+          test "$(dpkg-deb -f "$deb" Package)" = com.huayuarc.cputhermal
+          test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
+          ! dpkg-deb -f "$deb" | grep -q rootless-compat
+          dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './postinst'
+          dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './prerm'
+          dpkg-deb -c "$deb" | grep -q 'CPUthermal.dylib'
+          dpkg-deb -c "$deb" | grep -q 'CPUthermalSettings.bundle/Info.plist'
+          dpkg-deb -c "$deb" | grep -q 'CPUthermalSettings.bundle/icon@3x.png'
+          dpkg-deb -c "$deb" | grep -q 'LaunchDaemons/com.huayuarc.cputhermal.mount.plist'
+          dpkg-deb -c "$deb" | grep -q 'usr/local/bin/CPUthermalMountTool'
+          ! dpkg-deb -c "$deb" | grep -q 'var/jb/'
+
+      - name: Upload RootHide DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: cputhermal-roothide
+          path: packages/*.deb
+          if-no-files-found: error

@@ -2,17 +2,10 @@ export THEOS ?= /var/mobile/theos
 export PATH := $(THEOS)/bin:$(PATH)
 FINALPACKAGE = 1
 export TARGET = iphone:clang:16.5:15.0
-THEOS_PACKAGE_SCHEME = rootless
+export THEOS_PACKAGE_SCHEME = roothide
 include $(THEOS)/makefiles/common.mk
 # 不配置 INSTALL_TARGET_PROCESSES；安装/升级由 postinst 单独重启 thermalmonitord。
 export ARCHS = arm64 arm64e
-# ========== 双方案构建 ==========
-ifeq ($(SCHEME),roothide)
-export THEOS_PACKAGE_SCHEME := roothide
-else ifeq ($(THEOS_PACKAGE_SCHEME),)
-export THEOS_PACKAGE_SCHEME := rootless
-endif
-
 ROOTHIDE_LDFLAGS = -L$(THEOS_VENDOR_LIBRARY_PATH)/iphone/roothide -lroothide
 
 TWEAK_NAME = CPUthermal CPUthermalPrefHook CPUthermalFaceDownLock CPUthermalRefreshRate CPUthermalDisplay
