@@ -8,6 +8,11 @@
 
 @implementation CTLowPowerRootListController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = CTS("CPULowPower");
+}
+
 - (NSArray *)specifiers {
     if (!_specifiers) _specifiers = [self loadSpecifiersFromPlistName:CTS("Root") target:self];
     return _specifiers ?: [NSArray array];
@@ -22,6 +27,7 @@
     if ([key isEqualToString:CTS("whitelistEnabled")])
         return [NSNumber numberWithBool:[prefs[CTS("powerMode")] isEqualToString:CTS("fullPower")]];
     if ([key isEqualToString:CTS("lowPowerStrength")]) return CTS("standard");
+    if ([key isEqualToString:CTS("lockStrength")]) return CTS("saver");
     return [NSNumber numberWithBool:NO];
 }
 

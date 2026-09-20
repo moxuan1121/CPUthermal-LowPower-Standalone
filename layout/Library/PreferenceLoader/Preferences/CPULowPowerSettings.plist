@@ -2,11 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
     <key>entry</key><dict>
-        <key>bundle</key><string>CTLowPowerSettings</string>
+        <key>bundle</key><string>CPULowPowerSettings</string>
         <key>cell</key><string>PSLinkCell</string>
         <key>detail</key><string>CTLowPowerRootListController</string>
         <key>icon</key><string>icon.png</string>
         <key>isController</key><true/>
-        <key>label</key><string>CPU 低功耗</string>
+        <key>label</key><string>CPULowPower</string>
     </dict>
 </dict></plist>

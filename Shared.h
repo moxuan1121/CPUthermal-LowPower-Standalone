@@ -2,8 +2,8 @@
 #import <notify.h>
 #include <stdint.h>
 
-static const char *CTForegroundNotification = "com.huayuarc.cputhermal.lowpower/foreground";
-static const char *CTSettingsNotification = "com.huayuarc.cputhermal.lowpower/settingsChanged";
+static const char *CTForegroundNotification = "com.mox1121.cpulowpower/foreground";
+static const char *CTSettingsNotification = "com.mox1121.cpulowpower/settingsChanged";
 
 static inline uint64_t CTBundleHash(NSString *identifier) {
     const unsigned char *p = (const unsigned char *)identifier.UTF8String;

@@ -5,6 +5,7 @@
     <key>enabled</key><true/>
     <key>whitelistEnabled</key><false/>
     <key>lowPowerStrength</key><string>standard</string>
+    <key>lockStrength</key><string>saver</string>
     <key>lowPowerApps</key>
     <array><string>com.example.game</string></array>
 </dict>

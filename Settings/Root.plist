@@ -3,8 +3,8 @@
 <plist version="1.0"><dict><key>items</key><array>
     <dict>
         <key>cell</key><string>PSGroupCell</string>
-        <key>label</key><string>CPU 低功耗</string>
-        <key>footerText</key><string>独立于原 CPUthermal。启用插件后，白名单模式关闭＝全局低功耗；开启＝仅白名单应用低功耗。始终保留系统热保护。</string>
+        <key>label</key><string>CPULowPower</string>
+        <key>footerText</key><string>白名单模式关闭＝解锁时全局启用；开启＝解锁时仅白名单应用启用。锁屏时自动使用下方独立档位。</string>
     </dict>
     <dict>
         <key>cell</key><string>PSSwitchCell</string>
@@ -20,13 +20,25 @@
     </dict>
     <dict>
         <key>cell</key><string>PSGroupCell</string>
-        <key>footerText</key><string>省电：2.0W / 35%；标准：2.5W / 45%；性能：3.0W / 55%。</string>
+        <key>footerText</key><string>省电／标准／性能分别使用 35%／55%／75% 的 CPU 预算上限；实际 MHz 取决于机型、负载和系统温控，需真机实测。</string>
     </dict>
     <dict>
         <key>cell</key><string>PSSegmentCell</string>
         <key>key</key><string>lowPowerStrength</string>
         <key>default</key><string>standard</string>
         <key>label</key><string>低功耗强度</string>
+        <key>validTitles</key><array><string>省电</string><string>标准</string><string>性能</string></array>
+        <key>validValues</key><array><string>saver</string><string>standard</string><string>performance</string></array>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSGroupCell</string>
+        <key>footerText</key><string>屏幕熄灭时自动使用所选档位；亮屏后恢复上方档位与白名单规则。</string>
+    </dict>
+    <dict>
+        <key>cell</key><string>PSSegmentCell</string>
+        <key>key</key><string>lockStrength</string>
+        <key>default</key><string>saver</string>
+        <key>label</key><string>锁屏档位</string>
         <key>validTitles</key><array><string>省电</string><string>标准</string><string>性能</string></array>
         <key>validValues</key><array><string>saver</string><string>standard</string><string>performance</string></array>
     </dict>

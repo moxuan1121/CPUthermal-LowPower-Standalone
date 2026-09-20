@@ -38,12 +38,12 @@ jobs:
           test "$(dpkg-deb -f "$deb" Architecture)" = iphoneos-arm64e
           ! dpkg-deb -f "$deb" | grep -q 'rootless-compat'
           dpkg-deb --ctrl-tarfile "$deb" | tar -tf - | grep -q './postinst'
-          dpkg-deb -c "$deb" | grep -q 'CTLowPower.dylib'
-          dpkg-deb -c "$deb" | grep -q 'CTLowPowerForeground.dylib'
-          dpkg-deb -c "$deb" | grep -q 'CTLowPowerSettings.bundle/Info.plist'
-          dpkg-deb -c "$deb" | grep -q 'PreferenceLoader/Preferences/CTLowPowerSettings.plist'
+          dpkg-deb -c "$deb" | grep -q 'CPULowPower.dylib'
+          dpkg-deb -c "$deb" | grep -q 'CPULowPowerForeground.dylib'
+          dpkg-deb -c "$deb" | grep -q 'CPULowPowerSettings.bundle/Info.plist'
+          dpkg-deb -c "$deb" | grep -q 'PreferenceLoader/Preferences/CPULowPowerSettings.plist'
           for icon in icon.png icon@2x.png icon@3x.png; do
-            dpkg-deb -c "$deb" | grep -q "CTLowPowerSettings.bundle/$icon"
+            dpkg-deb -c "$deb" | grep -q "CPULowPowerSettings.bundle/$icon"
           done
 
       - name: Upload DEB
